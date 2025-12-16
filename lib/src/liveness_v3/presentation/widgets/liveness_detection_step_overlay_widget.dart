@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:camera/camera.dart';
+import 'package:face_recognition/src/liveness_v3/core/index.dart';
+import 'package:face_recognition/src/liveness_v3/presentation/widgets/circular_progress_widget/circular_progress_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-
-import '../models/liveness_detection_step_item.dart';
-import 'circular_progress_widget.dart';
 
 class LivenessDetectionStepOverlayWidget extends StatefulWidget {
   final List<LivenessDetectionStepItem> steps;
@@ -66,12 +65,11 @@ class LivenessDetectionStepOverlayWidgetState
     _initializeControllers();
     _initializeTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _pageViewVisible = true;
-        });
-      }
+      setState(() {
+        _pageViewVisible = true;
+      });
     });
+    debugPrint('showCurrentStep ${widget.showCurrentStep}');
   }
 
   void _initializeControllers() {
@@ -88,10 +86,6 @@ class LivenessDetectionStepOverlayWidgetState
 
   void _startCountdownTimer() {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
       if (_remainingDuration > 0) {
         setState(() {
           _remainingDuration--;
@@ -147,17 +141,10 @@ class LivenessDetectionStepOverlayWidgetState
   Future<void> _handleNextStep() async {
     _showLoader();
     await Future.delayed(const Duration(milliseconds: 100));
-    // Ensure we are mounted before using context/controllers
-    if (!mounted) return;
-
-    // Animate page
-    _pageController.nextPage(
-      duration: const Duration(
-        milliseconds: 300,
-      ), // Adjusted for clearer transition
+    await _pageController.nextPage(
+      duration: const Duration(milliseconds: 1),
       curve: Curves.easeIn,
     );
-
     await Future.delayed(const Duration(seconds: 1));
     _hideLoader();
     _updateState();
@@ -166,7 +153,7 @@ class LivenessDetectionStepOverlayWidgetState
   Future<void> _handleCompletion() async {
     _updateState();
     await Future.delayed(const Duration(milliseconds: 500));
-    if (mounted) widget.onCompleted();
+    widget.onCompleted();
   }
 
   void _updateState() {
@@ -180,13 +167,14 @@ class LivenessDetectionStepOverlayWidgetState
   }
 
   void reset() {
-    if (!mounted) return;
     _pageController.jumpToPage(0);
-    setState(() {
-      _currentIndex = 0;
-      _currentStepIndicator = 0;
-      _circularProgressWidget = _buildCircularIndicator();
-    });
+    if (mounted) {
+      setState(() {
+        _currentIndex = 0;
+        _currentStepIndicator = 0;
+        _circularProgressWidget = _buildCircularIndicator();
+      });
+    }
   }
 
   void _showLoader() {

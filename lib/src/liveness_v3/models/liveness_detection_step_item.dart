@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'liveness_detection_step.dart';
+import 'package:face_recognition/src/liveness_v3/core/index.dart';
 
 class LivenessDetectionStepItem {
   final LivenessDetectionStep step;

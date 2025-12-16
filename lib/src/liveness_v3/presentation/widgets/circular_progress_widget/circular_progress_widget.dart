@@ -1,6 +1,5 @@
+import 'package:face_recognition/src/liveness_v3/presentation/widgets/circular_progress_widget/circular_progress_painter.dart';
 import 'package:flutter/material.dart';
-
-import 'circular_progress_painter.dart';
 
 class CircularProgressWidget extends StatefulWidget {
   const CircularProgressWidget({

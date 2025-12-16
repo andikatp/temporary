@@ -49,9 +49,17 @@ class _LivenessDetectionTutorialScreenState
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: widget.isDarkMode
-                    ? Colors.white12
-                    : Colors.grey.shade200, // Fixed contrast
+                color: widget.isDarkMode ? Colors.black87 : Colors.white,
+                boxShadow: !widget.isDarkMode
+                    ? [
+                        BoxShadow(
+                          color: Colors.grey.withAlpha(51),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
               ),
               child: Column(
                 children: [
@@ -134,11 +142,11 @@ class _LivenessDetectionTutorialScreenState
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.isDarkMode
-                    ? Colors.white
-                    : Colors.black, // High contrast
-                foregroundColor: widget.isDarkMode
-                    ? Colors.black
+                    ? Colors.black87
                     : Colors.white,
+                foregroundColor: widget.isDarkMode
+                    ? Colors.white
+                    : Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -155,7 +163,7 @@ class _LivenessDetectionTutorialScreenState
                 Icon(Icons.info_outline_rounded, color: Colors.grey, size: 15),
                 SizedBox(width: 10),
                 Text(
-                  'Face Verification System',
+                  'Package Version: 1.1.0',
                   style: TextStyle(color: Colors.grey),
                 ),
               ],

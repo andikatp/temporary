@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:face_recognition/src/liveness_v3/core/index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../models/liveness_detection_cooldown.dart';
 
 class LivenessCooldownService {
   static const String _cooldownKey = 'liveness_detection_cooldown';

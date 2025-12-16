@@ -43,7 +43,12 @@ class CircularProgressPainter extends CustomPainter {
   }
 
   /// Draw a series of arcs, each composing the full steps of the indicator
-  void _drawStepArc(Canvas canvas, Paint paint, Rect rect, Size size) {
+  void _drawStepArc(
+    Canvas canvas,
+    Paint paint,
+    Rect rect,
+    Size size,
+  ) {
     var centerX = rect.center.dx;
     var centerY = rect.center.dy;
     var radius = math.min(centerX, centerY);
@@ -53,17 +58,8 @@ class CircularProgressPainter extends CustomPainter {
 
     for (double i = 0; i < 360; i += stepLine) {
       var outerCircleRadius = (radius - (i < draw ? 0 : heightLine / 2));
-      // var innerCircleRadius = (radius - heightLine);
+      var innerCircleRadius = (radius - heightLine);
 
-      // var x1 = centerX + outerCircleRadius * math.cos(i * math.pi / 180);
-      // var y1 = centerX + outerCircleRadius * math.sin(i * math.pi / 180);
-      //
-      // var x2 = centerX + innerCircleRadius * math.cos(i * math.pi / 180);
-      // var y2 = centerX + innerCircleRadius * math.sin(i * math.pi / 180);
-
-      // Fixed logic from original code snippet which had commented out sections or incomplete parts?
-      // Wait, the user provided code:
-      /*
       var x1 = centerX + outerCircleRadius * math.cos(i * math.pi / 180);
       var y1 = centerX + outerCircleRadius * math.sin(i * math.pi / 180);
       //
@@ -76,33 +72,6 @@ class CircularProgressPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeWidth = widthLine;
-      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), dashBrush);
-      */
-
-      var innerCircleRadius = (radius - heightLine);
-
-      var rad = i * math.pi / 180;
-
-      // Note: In the provided user code, centerX is used for Y coordinate calculation (y1 = centerX + ...),
-      // which assumes square canvas (centerX == centerY). If rect is centered, rect.center.dx should be used for x, and rect.center.dy for y.
-      // However, centerX and centerY are assigned from rect.center.dx/dy.
-
-      var x1 = centerX + outerCircleRadius * math.cos(rad);
-      var y1 =
-          centerY + outerCircleRadius * math.sin(rad); // Fixed to use centerY
-
-      var x2 = centerX + innerCircleRadius * math.cos(rad);
-      var y2 =
-          centerY + innerCircleRadius * math.sin(rad); // Fixed to use centerY
-
-      var dashBrush = paint
-        ..color = i < draw
-            ? selectedColor ?? Colors.red
-            : unselectedColor ?? Colors.yellow
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = widthLine;
-
       canvas.drawLine(Offset(x1, y1), Offset(x2, y2), dashBrush);
     }
   }

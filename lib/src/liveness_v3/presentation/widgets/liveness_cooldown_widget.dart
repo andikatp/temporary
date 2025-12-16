@@ -1,9 +1,8 @@
 import 'dart:async';
 
+import 'package:face_recognition/src/liveness_v3/core/index.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../models/liveness_detection_cooldown.dart';
 
 class LivenessCooldownWidget extends StatefulWidget {
   final LivenessDetectionCooldown cooldownState;
