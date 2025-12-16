@@ -40,7 +40,10 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
   bool _faceDetectedState = false;
   List<LivenessDetectionStepItem> _shuffledSteps = [];
 
-  // Brightness Screen
+  final List<File> _capturedImages = [];
+
+  // ...
+
   Future<void> setApplicationBrightness(double brightness) async {
     try {
       await ScreenBrightness.instance.setApplicationScreenBrightness(
@@ -225,6 +228,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
   }
 
   void _preInitCallBack() {
+    _capturedImages.clear();
     _isInfoStepCompleted = !widget.config.startWithInfoScreen;
 
     // Initialize and shuffle steps fresh each time
@@ -400,9 +404,24 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
   }
 
   Future<void> _completeStep({required LivenessDetectionStep step}) async {
+    _stopProcessing();
+
+    // Capture image logic
+    try {
+      await _cameraController?.stopImageStream();
+      XFile? file = await _cameraController?.takePicture();
+      if (file != null) {
+        _capturedImages.add(File(file.path));
+        widget.config.onEveryImageOnEveryStep?.call(List.from(_capturedImages));
+      }
+      // Restart stream
+      await _cameraController?.startImageStream(_processCameraImage);
+    } catch (e) {
+      debugPrint("Error capturing step image: $e");
+    }
+
     if (mounted) setState(() {});
     await _stepsKey.currentState?.nextPage();
-    _stopProcessing();
   }
 
   void _takePicture() async {
@@ -466,6 +485,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
 
     if (_stepsKey.currentState?.currentIndex != 0) {
       _stepsKey.currentState?.reset();
+      _capturedImages.clear();
     }
 
     if (mounted) setState(() {});

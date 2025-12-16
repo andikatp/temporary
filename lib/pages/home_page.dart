@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
 import 'package:face_recognition/widget/home_button.dart';
 import 'package:flutter/material.dart';
@@ -197,7 +199,10 @@ class HomePage extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => LivenessDetectionView(
-                        config: LivenessDetectionConfig(),
+                        config: LivenessDetectionConfig(
+                          onEveryImageOnEveryStep: (images) =>
+                              inspect(images.length),
+                        ),
                       ),
                     ),
                   );

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
 
@@ -17,6 +19,7 @@ class LivenessDetectionConfig {
   final bool shuffleListWithSmileLast;
   final bool showCurrentStep;
   final bool isDarkMode;
+  final void Function(List<File> images)? onEveryImageOnEveryStep;
 
   LivenessDetectionConfig({
     this.startWithInfoScreen = false,
@@ -34,6 +37,7 @@ class LivenessDetectionConfig {
     this.shuffleListWithSmileLast = true,
     this.showCurrentStep = false,
     this.isDarkMode = true,
+    this.onEveryImageOnEveryStep,
   }) : assert(
          !useCustomizedLabel || customizedLabel != null,
          'customizedLabel must not be null when useCustomizedLabel is true',
