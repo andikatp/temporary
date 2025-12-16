@@ -201,7 +201,7 @@ class HomePage extends StatelessWidget {
                       builder: (context) => LivenessDetectionView(
                         config: LivenessDetectionConfig(
                           onEveryImageOnEveryStep: (images) =>
-                              inspect(images.length),
+                              inspect(images.length.toString()),
                         ),
                       ),
                     ),

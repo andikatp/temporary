@@ -8,7 +8,9 @@ import 'package:camera/camera.dart';
 import 'package:collection/collection.dart';
 import 'package:face_recognition/src/liveness_v3/core/constants/index.dart';
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
+import 'package:face_recognition/src/liveness_v3/core/utils/image_helper.dart';
 import 'package:face_recognition/src/liveness_v3/flutter_liveness_detection_randomized_plugin.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
@@ -33,12 +35,15 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
   bool _isBusy = false;
   bool _isTakingPicture = false;
   Timer? _timerToDetectFace;
+  CameraImage? _latestFrame;
 
   // Detection state variables
   late bool _isInfoStepCompleted;
   bool _isProcessingStep = false;
   bool _faceDetectedState = false;
   List<LivenessDetectionStepItem> _shuffledSteps = [];
+  bool _isCapturingStepImage = false;
+  int _lastCapturedStepIndex = -1;
 
   final List<File> _capturedImages = [];
 
@@ -85,6 +90,56 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
       }
     } else {
       list.shuffle(Random());
+    }
+  }
+
+  Future<void> _processCameraImage(CameraImage cameraImage) async {
+    _latestFrame = cameraImage;
+
+    final camera = availableCams[_cameraIndex];
+    final rotation = InputImageRotationValue.fromRawValue(
+      camera.sensorOrientation,
+    );
+    if (rotation == null) return;
+
+    final inputImage = InputImage.fromBytes(
+      bytes: cameraImage.planes[0].bytes,
+      metadata: InputImageMetadata(
+        size: Size(cameraImage.width.toDouble(), cameraImage.height.toDouble()),
+        rotation: rotation,
+        format: InputImageFormat.nv21,
+        bytesPerRow: cameraImage.planes[0].bytesPerRow,
+      ),
+    );
+
+    await _processImage(inputImage);
+  }
+
+  Future<void> _captureFromStream(CameraImage image) async {
+    try {
+      // Hard cap safety
+      if (_capturedImages.length >= _getStepsToUse().length) return;
+
+      final bytes = await compute(ImageHelper.processCameraImage, {
+        'cameraImage': image,
+        'quality': widget.config.imageQuality,
+      });
+
+      final dir = await getTemporaryDirectory();
+      final file = File(
+        '${dir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+
+      await file.writeAsBytes(bytes);
+      _capturedImages.add(file);
+
+      debugPrint('Captured images: ${_capturedImages.length}');
+
+      widget.config.onEveryImageOnEveryStep?.call(
+        List.unmodifiable(_capturedImages),
+      );
+    } catch (e) {
+      debugPrint('Capture error: $e');
     }
   }
 
@@ -293,52 +348,6 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     );
   }
 
-  Future<void> _processCameraImage(CameraImage cameraImage) async {
-    final camera = availableCams[_cameraIndex];
-    final imageRotation = InputImageRotationValue.fromRawValue(
-      camera.sensorOrientation,
-    );
-    if (imageRotation == null) return;
-
-    InputImage? inputImage;
-
-    if (Platform.isAndroid) {
-      if (cameraImage.format.group == ImageFormatGroup.nv21) {
-        inputImage = InputImage.fromBytes(
-          bytes: cameraImage.planes[0].bytes,
-          metadata: InputImageMetadata(
-            size: Size(
-              cameraImage.width.toDouble(),
-              cameraImage.height.toDouble(),
-            ),
-            rotation: imageRotation,
-            format: InputImageFormat.nv21,
-            bytesPerRow: cameraImage.planes[0].bytesPerRow,
-          ),
-        );
-      }
-    } else if (Platform.isIOS) {
-      if (cameraImage.format.group == ImageFormatGroup.bgra8888) {
-        inputImage = InputImage.fromBytes(
-          bytes: cameraImage.planes[0].bytes,
-          metadata: InputImageMetadata(
-            size: Size(
-              cameraImage.width.toDouble(),
-              cameraImage.height.toDouble(),
-            ),
-            rotation: imageRotation,
-            format: InputImageFormat.bgra8888,
-            bytesPerRow: cameraImage.planes[0].bytesPerRow,
-          ),
-        );
-      }
-    }
-
-    if (inputImage != null) {
-      _processImage(inputImage);
-    }
-  }
-
   Future<void> _processImage(InputImage inputImage) async {
     if (_isBusy) return;
     _isBusy = true;
@@ -406,18 +415,18 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
   Future<void> _completeStep({required LivenessDetectionStep step}) async {
     _stopProcessing();
 
-    // Capture image logic
-    try {
-      await _cameraController?.stopImageStream();
-      XFile? file = await _cameraController?.takePicture();
-      if (file != null) {
-        _capturedImages.add(File(file.path));
-        widget.config.onEveryImageOnEveryStep?.call(List.from(_capturedImages));
-      }
-      // Restart stream
-      await _cameraController?.startImageStream(_processCameraImage);
-    } catch (e) {
-      debugPrint("Error capturing step image: $e");
+    final int currentIndex = _stepsKey.currentState?.currentIndex ?? 0;
+
+    // Prevent double capture for same step
+    if (_lastCapturedStepIndex != currentIndex &&
+        !_isCapturingStepImage &&
+        _latestFrame != null) {
+      _isCapturingStepImage = true;
+      _lastCapturedStepIndex = currentIndex;
+
+      await _captureFromStream(_latestFrame!);
+
+      _isCapturingStepImage = false;
     }
 
     if (mounted) setState(() {});
@@ -474,18 +483,11 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
   }
 
   void _resetSteps() {
-    List<LivenessDetectionStepItem> currentSteps = _getStepsToUse();
-
-    for (var step in currentSteps) {
-      final index = currentSteps.indexWhere((p1) => p1.step == step.step);
-      if (index != -1) {
-        currentSteps[index] = currentSteps[index].copyWith();
-      }
-    }
-
     if (_stepsKey.currentState?.currentIndex != 0) {
       _stepsKey.currentState?.reset();
       _capturedImages.clear();
+      _lastCapturedStepIndex = -1;
+      _isCapturingStepImage = false;
     }
 
     if (mounted) setState(() {});
