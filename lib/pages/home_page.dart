@@ -1,4 +1,4 @@
-import 'dart:developer';
+import 'dart:io';
 
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
 import 'package:face_recognition/widget/home_button.dart';
@@ -9,8 +9,15 @@ import 'emotion_detection_page.dart';
 import 'face_detection_page.dart';
 import 'face_recognition_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<File> imagePaths = [];
 
   @override
   Widget build(BuildContext context) {
@@ -200,8 +207,18 @@ class HomePage extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) => LivenessDetectionView(
                         config: LivenessDetectionConfig(
-                          onEveryImageOnEveryStep: (images) =>
-                              inspect(images.length.toString()),
+                          useCustomizedLabel: true,
+                          customizedLabel: LivenessDetectionLabelModel(
+                            blink: 'blink',
+                            lookDown: 'lookDown',
+                            lookLeft: 'lookLeft',
+                            lookRight: 'lookRight',
+                            lookUp: 'lookUp',
+                            smile: 'smile',
+                          ),
+                          onEveryImageOnEveryStep: (images) {
+                            setState(() => imagePaths = images);
+                          },
                         ),
                       ),
                     ),
@@ -209,6 +226,25 @@ class HomePage extends StatelessWidget {
                 },
                 child: const HomeButton(text: "Liveness V3"),
               ),
+
+              const SizedBox(height: 10),
+              if (imagePaths.isNotEmpty)
+                SizedBox(
+                  height: 150,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    scrollDirection: .horizontal,
+                    itemCount: imagePaths.length,
+                    itemBuilder: (context, index) {
+                      return Image.file(
+                        File(imagePaths[index].path),
+                        height: 150,
+                        width: 150,
+                        fit: .cover,
+                      );
+                    },
+                  ),
+                ),
             ],
           ),
         ),

@@ -43,36 +43,37 @@ class CircularProgressPainter extends CustomPainter {
   }
 
   /// Draw a series of arcs, each composing the full steps of the indicator
-  void _drawStepArc(
-    Canvas canvas,
-    Paint paint,
-    Rect rect,
-    Size size,
-  ) {
-    var centerX = rect.center.dx;
-    var centerY = rect.center.dy;
-    var radius = math.min(centerX, centerY);
+  void _drawStepArc(Canvas canvas, Paint paint, Rect rect, Size size) {
+    final centerX = rect.center.dx;
+    final centerY = rect.center.dy;
+    final radius = math.min(centerX, centerY);
 
-    var draw = (360 * currentStep) / maxStep;
-    var stepLine = 360 / maxStep;
+    final stepAngle = 2 * math.pi / maxStep;
+    final activeSteps = currentStep.clamp(0, maxStep).floor();
 
-    for (double i = 0; i < 360; i += stepLine) {
-      var outerCircleRadius = (radius - (i < draw ? 0 : heightLine / 2));
-      var innerCircleRadius = (radius - heightLine);
+    for (int step = 0; step < maxStep; step++) {
+      final angle = step * stepAngle;
 
-      var x1 = centerX + outerCircleRadius * math.cos(i * math.pi / 180);
-      var y1 = centerX + outerCircleRadius * math.sin(i * math.pi / 180);
-      //
-      var x2 = centerX + innerCircleRadius * math.cos(i * math.pi / 180);
-      var y2 = centerX + innerCircleRadius * math.sin(i * math.pi / 180);
-      var dashBrush = paint
-        ..color = i < draw
+      final isActive = step < activeSteps;
+
+      final outerRadius = radius - (isActive ? 0 : heightLine / 2);
+      final innerRadius = radius - heightLine;
+
+      final x1 = centerX + outerRadius * math.cos(angle);
+      final y1 = centerY + outerRadius * math.sin(angle);
+
+      final x2 = centerX + innerRadius * math.cos(angle);
+      final y2 = centerY + innerRadius * math.sin(angle);
+
+      paint
+        ..color = isActive
             ? selectedColor ?? Colors.red
             : unselectedColor ?? Colors.yellow
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..strokeWidth = widthLine;
-      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), dashBrush);
+
+      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), paint);
     }
   }
 

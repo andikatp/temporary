@@ -1,25 +1,10 @@
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
 
 List<LivenessDetectionStepItem> stepLiveness = [
-  LivenessDetectionStepItem(
-    step: LivenessDetectionStep.blink,
-    title: "Blink 2-3 Times",
-  ),
-  LivenessDetectionStepItem(
-    step: LivenessDetectionStep.lookUp,
-    title: "Look UP",
-  ),
-  LivenessDetectionStepItem(
-    step: LivenessDetectionStep.lookDown,
-    title: "Look DOWN",
-  ),
-  LivenessDetectionStepItem(
-    step: LivenessDetectionStep.lookRight,
-    title: "Look RIGHT",
-  ),
-  LivenessDetectionStepItem(
-    step: LivenessDetectionStep.lookLeft,
-    title: "Look LEFT",
-  ),
-  LivenessDetectionStepItem(step: LivenessDetectionStep.smile, title: "Smile"),
+  LivenessDetectionStepItem(step: .blink, title: "Berkedip 2-3 kali"),
+  LivenessDetectionStepItem(step: .lookUp, title: "Lihat Atas"),
+  LivenessDetectionStepItem(step: .lookDown, title: "Lihat Bawah"),
+  LivenessDetectionStepItem(step: .lookRight, title: "Lihat Kanan"),
+  LivenessDetectionStepItem(step: .lookLeft, title: "Lihat Kiri"),
+  LivenessDetectionStepItem(step: .smile, title: "Senyum"),
 ];

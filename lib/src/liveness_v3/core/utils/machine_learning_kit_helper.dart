@@ -11,7 +11,7 @@ class MachineLearningKitHelper {
       enableClassification: true,
       enableLandmarks: true,
       enableTracking: true,
-      performanceMode: FaceDetectorMode.accurate,
+      performanceMode: .accurate,
     ),
   );
 

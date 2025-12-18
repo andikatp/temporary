@@ -29,7 +29,7 @@ class LivenessDetectionConfig {
     this.customizedLabel,
     this.isEnableMaxBrightness = true,
     this.imageQuality = 100,
-    this.cameraResolution = ResolutionPreset.high,
+    this.cameraResolution = .high,
     this.enableCooldownOnFailure = true,
     this.maxFailedAttempts = 3,
     this.cooldownMinutes = 10,

@@ -77,9 +77,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     required bool isSmileLast,
   }) {
     if (isSmileLast) {
-      int? smileIndex = list.indexWhere(
-        (item) => item.step == LivenessDetectionStep.smile,
-      );
+      int? smileIndex = list.indexWhere((item) => item.step == .smile);
 
       if (smileIndex != -1) {
         LivenessDetectionStepItem smileItem = list.removeAt(smileIndex);
@@ -107,7 +105,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
       metadata: InputImageMetadata(
         size: Size(cameraImage.width.toDouble(), cameraImage.height.toDouble()),
         rotation: rotation,
-        format: InputImageFormat.nv21,
+        format: .nv21,
         bytesPerRow: cameraImage.planes[0].bytesPerRow,
       ),
     );
@@ -117,12 +115,15 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
 
   Future<void> _captureFromStream(CameraImage image) async {
     try {
-      // Hard cap safety
       if (_capturedImages.length >= _getStepsToUse().length) return;
+
+      final camera = availableCams[_cameraIndex];
 
       final bytes = await compute(ImageHelper.processCameraImage, {
         'cameraImage': image,
         'quality': widget.config.imageQuality,
+        'rotation': camera.sensorOrientation,
+        'isFrontCamera': camera.lensDirection == .front,
       });
 
       final dir = await getTemporaryDirectory();
@@ -132,8 +133,6 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
 
       await file.writeAsBytes(bytes);
       _capturedImages.add(file);
-
-      debugPrint('Captured images: ${_capturedImages.length}');
 
       widget.config.onEveryImageOnEveryStep?.call(
         List.unmodifiable(_capturedImages),
@@ -197,7 +196,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     if (label.blink != "") {
       customizedSteps.add(
         LivenessDetectionStepItem(
-          step: LivenessDetectionStep.blink,
+          step: .blink,
           title: label.blink ?? "Blink 2-3 Times",
         ),
       );
@@ -207,7 +206,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     if (label.lookRight != "") {
       customizedSteps.add(
         LivenessDetectionStepItem(
-          step: LivenessDetectionStep.lookRight,
+          step: .lookRight,
           title: label.lookRight ?? "Look RIGHT",
         ),
       );
@@ -217,7 +216,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     if (label.lookLeft != "") {
       customizedSteps.add(
         LivenessDetectionStepItem(
-          step: LivenessDetectionStep.lookLeft,
+          step: .lookLeft,
           title: label.lookLeft ?? "Look LEFT",
         ),
       );
@@ -227,7 +226,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     if (label.lookUp != "") {
       customizedSteps.add(
         LivenessDetectionStepItem(
-          step: LivenessDetectionStep.lookUp,
+          step: .lookUp,
           title: label.lookUp ?? "Look UP",
         ),
       );
@@ -237,7 +236,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     if (label.lookDown != "") {
       customizedSteps.add(
         LivenessDetectionStepItem(
-          step: LivenessDetectionStep.lookDown,
+          step: .lookDown,
           title: label.lookDown ?? "Look DOWN",
         ),
       );
@@ -246,10 +245,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     // Add smile step if not explicitly skipped
     if (label.smile != "") {
       customizedSteps.add(
-        LivenessDetectionStepItem(
-          step: LivenessDetectionStep.smile,
-          title: label.smile ?? "Smile",
-        ),
+        LivenessDetectionStepItem(step: .smile, title: label.smile ?? "Smile"),
       );
     }
 
@@ -298,21 +294,18 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     availableCams = await availableCameras();
     if (availableCams.any(
       (element) =>
-          element.lensDirection == CameraLensDirection.front &&
-          element.sensorOrientation == 90,
+          element.lensDirection == .front && element.sensorOrientation == 90,
     )) {
       _cameraIndex = availableCams.indexOf(
         availableCams.firstWhere(
           (element) =>
-              element.lensDirection == CameraLensDirection.front &&
+              element.lensDirection == .front &&
               element.sensorOrientation == 90,
         ),
       );
     } else {
       _cameraIndex = availableCams.indexOf(
-        availableCams.firstWhere(
-          (element) => element.lensDirection == CameraLensDirection.front,
-        ),
+        availableCams.firstWhere((element) => element.lensDirection == .front),
       );
     }
     if (!widget.config.startWithInfoScreen) {
@@ -386,27 +379,27 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionView> {
     debugPrint('Current Step: $step');
 
     switch (step) {
-      case LivenessDetectionStep.blink:
+      case .blink:
         await _handlingBlinkStep(face: face, step: step);
         break;
 
-      case LivenessDetectionStep.lookRight:
+      case .lookRight:
         await _handlingTurnRight(face: face, step: step);
         break;
 
-      case LivenessDetectionStep.lookLeft:
+      case .lookLeft:
         await _handlingTurnLeft(face: face, step: step);
         break;
 
-      case LivenessDetectionStep.lookUp:
+      case .lookUp:
         await _handlingLookUp(face: face, step: step);
         break;
 
-      case LivenessDetectionStep.lookDown:
+      case .lookDown:
         await _handlingLookDown(face: face, step: step);
         break;
 
-      case LivenessDetectionStep.smile:
+      case .smile:
         await _handlingSmile(face: face, step: step);
         break;
     }

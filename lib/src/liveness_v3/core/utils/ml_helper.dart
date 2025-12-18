@@ -10,7 +10,7 @@ class MLHelper {
     options: FaceDetectorOptions(
       enableClassification: true,
       enableTracking: true,
-      performanceMode: FaceDetectorMode.fast,
+      performanceMode: .fast,
     ),
   );
 
@@ -23,7 +23,7 @@ class MLHelper {
       metadata: InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
         rotation: rotation,
-        format: InputImageFormat.nv21,
+        format: .nv21,
         bytesPerRow: image.planes[0].bytesPerRow,
       ),
     );
