@@ -208,18 +208,18 @@ class _HomePageState extends State<HomePage> {
                     MaterialPageRoute(
                       builder: (context) => LivenessDetectionScreen(
                         config: LivenessDetectionConfig(
+                          isDarkMode: false,
                           useCustomizedLabel: true,
                           customizedLabel: LivenessDetectionLabelModel(
-                            blink: 'blink',
-                            lookDown: 'lookDown',
-                            lookLeft: 'lookLeft',
-                            lookRight: 'lookRight',
-                            lookUp: 'lookUp',
-                            smile: 'smile',
+                            blink: 'Berkedip',
+                            lookDown: 'Lihat Bawah',
+                            lookLeft: 'Lihat Kiri',
+                            lookRight: 'Lihat Kanan',
+                            lookUp: 'Lihat Atas',
+                            smile: 'Senyum',
                           ),
-                          onEveryImageOnEveryStep: (images) {
-                            setState(() => imagePaths = images);
-                          },
+                          onEveryImageOnEveryStep: (images) =>
+                              setState(() => imagePaths = images),
                         ),
                       ),
                     ),

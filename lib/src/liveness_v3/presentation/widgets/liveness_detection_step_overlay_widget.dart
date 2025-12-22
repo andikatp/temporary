@@ -4,7 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
 import 'package:face_recognition/src/liveness_v3/presentation/liveness_detection_coordinator.dart';
 import 'package:face_recognition/src/liveness_v3/presentation/widgets/circular_progress_widget/circular_progress_widget.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:face_recognition/src/liveness_v3/presentation/widgets/custom_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -162,9 +162,9 @@ class LivenessDetectionStepOverlayWidgetState
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      minimum: const EdgeInsets.all(16),
+      minimum: const .all(16),
       child: Container(
-        margin: const EdgeInsets.all(12),
+        margin: const .all(12),
         height: double.infinity,
         width: double.infinity,
         color: Colors.transparent,
@@ -176,14 +176,7 @@ class LivenessDetectionStepOverlayWidgetState
                   ? Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Back',
-                          style: TextStyle(
-                            color: widget.isDarkMode
-                                ? Colors.white
-                                : Colors.black,
-                          ),
-                        ),
+                        CustomBackButton(onTap: () => Navigator.pop(context)),
                         Visibility(
                           replacement: const SizedBox.shrink(),
                           visible: widget.showDurationUiText,
@@ -207,12 +200,7 @@ class LivenessDetectionStepOverlayWidgetState
                         ),
                       ],
                     )
-                  : Text(
-                      'Back',
-                      style: TextStyle(
-                        color: widget.isDarkMode ? Colors.white : Colors.black,
-                      ),
-                    ),
+                  : CustomBackButton(onTap: () => Navigator.pop(context)),
             ),
             _buildBody(),
           ],
@@ -235,20 +223,12 @@ class LivenessDetectionStepOverlayWidgetState
           replacement: const CircularProgressIndicator.adaptive(),
           child: _buildStepPageView(),
         ),
-        _buildLoader(),
       ],
     );
   }
 
   Widget _buildCircularCamera() {
-    return SizedBox(
-      height: 300,
-      width: 300,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(1000),
-        child: _circularProgressWidget,
-      ),
-    );
+    return SizedBox(height: 300, width: 300, child: _circularProgressWidget);
   }
 
   String _getRemainingTimeText(int duration) {
@@ -286,7 +266,9 @@ class LivenessDetectionStepOverlayWidgetState
                 ),
         ),
         Text(
-          widget.isFaceDetected ? 'User Face Found' : 'User Face Not Found...',
+          widget.isFaceDetected
+              ? 'Wajah ditemukan'
+              : 'Pastikan wajah anda di dalam oval',
           style: TextStyle(
             color: widget.isDarkMode ? Colors.white : Colors.black,
           ),
@@ -312,32 +294,24 @@ class LivenessDetectionStepOverlayWidgetState
 
   Widget _buildStepItem(BuildContext context, int index) {
     return Padding(
-      padding: const EdgeInsets.all(10),
+      padding: const .all(10),
       child: Container(
         decoration: BoxDecoration(
           color: widget.isDarkMode ? Colors.black : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: .circular(20),
         ),
-        alignment: Alignment.center,
-        margin: const EdgeInsets.symmetric(horizontal: 30),
-        padding: const EdgeInsets.all(10),
+        alignment: .center,
+        margin: const .symmetric(horizontal: 30),
+        padding: const .all(10),
         child: Text(
           widget.steps[index].title,
-          textAlign: TextAlign.center,
+          textAlign: .center,
           style: TextStyle(
             color: widget.isDarkMode ? Colors.white : Colors.black,
             fontSize: 24,
-            fontWeight: FontWeight.w500,
+            fontWeight: .bold,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLoader() {
-    return Center(
-      child: CupertinoActivityIndicator(
-        color: !_isLoading ? Colors.transparent : Colors.white,
       ),
     );
   }
