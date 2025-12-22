@@ -28,10 +28,10 @@ class _LivenessDetectionTutorialScreenState
     return Scaffold(
       backgroundColor: widget.isDarkMode ? Colors.black : Colors.white,
       body: SafeArea(
-        minimum: const EdgeInsets.all(12),
+        minimum: const .all(12),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: .center,
+          crossAxisAlignment: .center,
           children: [
             const Spacer(),
             const SizedBox(height: 16),
@@ -45,10 +45,10 @@ class _LivenessDetectionTutorialScreenState
             ),
             const SizedBox(height: 32),
             Container(
-              width: MediaQuery.of(context).size.width,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              width: MediaQuery.sizeOf(context).width,
+              padding: const .symmetric(vertical: 16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: .circular(8),
                 color: widget.isDarkMode ? Colors.black87 : Colors.white,
                 boxShadow: !widget.isDarkMode
                     ? [

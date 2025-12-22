@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
+import 'package:face_recognition/src/liveness_v3/presentation/views/liveness_detection_screen.dart';
 import 'package:face_recognition/widget/home_button.dart';
 import 'package:flutter/material.dart';
 
@@ -205,7 +206,7 @@ class _HomePageState extends State<HomePage> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => LivenessDetectionView(
+                      builder: (context) => LivenessDetectionScreen(
                         config: LivenessDetectionConfig(
                           useCustomizedLabel: true,
                           customizedLabel: LivenessDetectionLabelModel(

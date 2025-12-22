@@ -1,5 +1,6 @@
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
 import 'package:face_recognition/src/liveness_v3/flutter_liveness_detection_randomized_plugin_platform_interface.dart';
+import 'package:face_recognition/src/liveness_v3/presentation/views/liveness_detection_screen.dart';
 import 'package:flutter/material.dart';
 
 class FlutterLivenessDetectionRandomizedPlugin {
@@ -41,7 +42,7 @@ class FlutterLivenessDetectionRandomizedPlugin {
 
     final String? capturedFacePath = await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => LivenessDetectionView(config: config),
+        builder: (context) => LivenessDetectionScreen(config: config),
       ),
     );
 

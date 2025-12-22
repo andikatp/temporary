@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
+import 'package:face_recognition/src/liveness_v3/presentation/liveness_detection_coordinator.dart';
 import 'package:face_recognition/src/liveness_v3/presentation/widgets/circular_progress_widget/circular_progress_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
 class LivenessDetectionStepOverlayWidget extends StatefulWidget {
+  final LivenessDetectionCoordinator coordinator;
   final List<LivenessDetectionStepItem> steps;
   final VoidCallback onCompleted;
   final Widget camera;
@@ -20,6 +22,7 @@ class LivenessDetectionStepOverlayWidget extends StatefulWidget {
 
   const LivenessDetectionStepOverlayWidget({
     super.key,
+    required this.coordinator,
     required this.steps,
     required this.onCompleted,
     required this.camera,
@@ -38,10 +41,7 @@ class LivenessDetectionStepOverlayWidget extends StatefulWidget {
 
 class LivenessDetectionStepOverlayWidgetState
     extends State<LivenessDetectionStepOverlayWidget> {
-  int get currentIndex => _currentIndex;
-
   bool _isLoading = false;
-  int _currentIndex = 0;
   double _currentStepIndicator = 0;
   late final PageController _pageController;
   late CircularProgressWidget _circularProgressWidget;
@@ -57,19 +57,51 @@ class LivenessDetectionStepOverlayWidgetState
     return 100 / stepLength;
   }
 
-  String get stepCounter => "$_currentIndex/${widget.steps.length}";
+  String get stepCounter =>
+      "${widget.coordinator.currentIndex}/${widget.steps.length}";
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
     _initializeTimer();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _pageViewVisible = true;
-      });
-    });
+    widget.coordinator.addListener(_onCoordinatorChanged);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => setState(() => _pageViewVisible = true),
+    );
     debugPrint('showCurrentStep ${widget.showCurrentStep}');
+  }
+
+  void _onCoordinatorChanged() {
+    final currentIndex = widget.coordinator.currentIndex;
+    final isProcessing = widget.coordinator.isProcessing;
+
+    // Update loading state
+    if (_isLoading != isProcessing) {
+      if (mounted) setState(() => _isLoading = isProcessing);
+    }
+
+    // Update page view and progress
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(currentIndex);
+    }
+
+    final newProgress = currentIndex * _getStepIncrement(widget.steps.length);
+    if (_currentStepIndicator != newProgress) {
+      if (mounted) {
+        setState(() {
+          _currentStepIndicator = newProgress;
+          _circularProgressWidget = _buildCircularIndicator();
+        });
+      }
+    }
+
+    // Check for completion
+    if (widget.coordinator.isCompleted) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) widget.onCompleted();
+      });
+    }
   }
 
   void _initializeControllers() {
@@ -87,9 +119,7 @@ class LivenessDetectionStepOverlayWidgetState
   void _startCountdownTimer() {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingDuration > 0) {
-        setState(() {
-          _remainingDuration--;
-        });
+        setState(() => _remainingDuration--);
       } else {
         _countdownTimer?.cancel();
       }
@@ -123,66 +153,10 @@ class LivenessDetectionStepOverlayWidgetState
 
   @override
   void dispose() {
+    widget.coordinator.removeListener(_onCoordinatorChanged);
     _pageController.dispose();
     _countdownTimer?.cancel();
     super.dispose();
-  }
-
-  Future<void> nextPage() async {
-    if (_isLoading) return;
-
-    if (_currentIndex + 1 <= widget.steps.length - 1) {
-      await _handleNextStep();
-    } else {
-      await _handleCompletion();
-    }
-  }
-
-  Future<void> _handleNextStep() async {
-    _showLoader();
-    await Future.delayed(const Duration(milliseconds: 100));
-    await _pageController.nextPage(
-      duration: const Duration(milliseconds: 1),
-      curve: Curves.easeIn,
-    );
-    await Future.delayed(const Duration(seconds: 1));
-    _hideLoader();
-    _updateState();
-  }
-
-  Future<void> _handleCompletion() async {
-    _updateState();
-    await Future.delayed(const Duration(milliseconds: 500));
-    widget.onCompleted();
-  }
-
-  void _updateState() {
-    if (mounted) {
-      setState(() {
-        _currentIndex++;
-        _currentStepIndicator += _getStepIncrement(widget.steps.length);
-        _circularProgressWidget = _buildCircularIndicator();
-      });
-    }
-  }
-
-  void reset() {
-    _pageController.jumpToPage(0);
-    if (mounted) {
-      setState(() {
-        _currentIndex = 0;
-        _currentStepIndicator = 0;
-        _circularProgressWidget = _buildCircularIndicator();
-      });
-    }
-  }
-
-  void _showLoader() {
-    if (mounted) setState(() => _isLoading = true);
-  }
-
-  void _hideLoader() {
-    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -249,21 +223,19 @@ class LivenessDetectionStepOverlayWidgetState
 
   Widget _buildBody() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: .center,
+      crossAxisAlignment: .center,
+      mainAxisSize: .max,
+      spacing: 16,
       children: [
         _buildCircularCamera(),
-        const SizedBox(height: 16),
         _buildFaceDetectionStatus(),
-        const SizedBox(height: 16),
         Visibility(
           visible: _pageViewVisible,
           replacement: const CircularProgressIndicator.adaptive(),
           child: _buildStepPageView(),
         ),
-        const SizedBox(height: 16),
-        widget.isDarkMode ? _buildLoaderDarkMode() : _buildLoaderLightMode(),
+        _buildLoader(),
       ],
     );
   }
@@ -287,7 +259,8 @@ class LivenessDetectionStepOverlayWidgetState
 
   Widget _buildFaceDetectionStatus() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: .center,
+      spacing: 16,
       children: [
         SizedBox(
           child: widget.isDarkMode
@@ -312,7 +285,6 @@ class LivenessDetectionStepOverlayWidgetState
                   ),
                 ),
         ),
-        const SizedBox(width: 16),
         Text(
           widget.isFaceDetected ? 'User Face Found' : 'User Face Not Found...',
           style: TextStyle(
@@ -362,18 +334,10 @@ class LivenessDetectionStepOverlayWidgetState
     );
   }
 
-  Widget _buildLoaderDarkMode() {
+  Widget _buildLoader() {
     return Center(
       child: CupertinoActivityIndicator(
         color: !_isLoading ? Colors.transparent : Colors.white,
-      ),
-    );
-  }
-
-  Widget _buildLoaderLightMode() {
-    return Center(
-      child: CupertinoActivityIndicator(
-        color: _isLoading ? Colors.transparent : Colors.white,
       ),
     );
   }
