@@ -16,6 +16,7 @@ dependencies:
   camera: 0.11.3
   google_mlkit_face_detection: 0.13.1
   fluttertoast: ^9.0.0
+  flutter_liveness: ^1.1.3
   face_auth_engine:
     git:
       url: https://github.com/andikatp/face_auth_engine.git

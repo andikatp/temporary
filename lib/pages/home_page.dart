@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
+import 'package:face_recognition/src/liveness_v3/presentation/views/custom_face_detector_screen.dart';
 import 'package:face_recognition/src/liveness_v3/presentation/views/liveness_detection_screen.dart';
 import 'package:face_recognition/widget/home_button.dart';
 import 'package:flutter/material.dart';
@@ -227,7 +228,17 @@ class _HomePageState extends State<HomePage> {
                 },
                 child: const HomeButton(text: "Liveness V3"),
               ),
-
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => CustomFaceDetectorScreen(),
+                    ),
+                  );
+                },
+                child: const HomeButton(text: "Custom Face Detector"),
+              ),
               const SizedBox(height: 10),
               if (imagePaths.isNotEmpty)
                 SizedBox(

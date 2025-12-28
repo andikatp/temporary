@@ -255,6 +255,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
+  flutter_liveness:
+    dependency: "direct main"
+    description:
+      name: flutter_liveness
+      sha256: f8407f078aa28cbdab0e7ee76bc71033a43cb1e8d1b47f637f046fad071abf14
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.3"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -856,4 +864,4 @@ packages:
     version: "6.6.1"
 sdks:
   dart: ">=3.10.3 <4.0.0"
-  flutter: ">=3.35.0"
+  flutter: ">=3.35.7"
