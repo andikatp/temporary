@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:face_auth_engine/face_auth_engine.dart';
 import 'package:face_recognition/src/liveness_v4/others/camera_function.dart';
 import 'package:face_recognition/src/liveness_v4/presentation/widgets/face_overlay.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
   bool _isProcessingFrame = false;
   bool _isWellPositioned = false;
   List<CameraDescription> _cameras = [];
+  late final LivenessDetector liveness;
 
   bool _initialized = false;
 
@@ -29,7 +31,20 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
     _init();
   }
 
+  Future<void> initLiveness() async {
+    liveness = await LivenessDetector.create(
+      options: LivenessOptions(
+        useGpu: true,
+        threshold: 0.8,
+        applyLaplacianGate: true,
+        laplacianThreshold: 500,
+      ),
+    );
+  }
+
   Future<void> _init() async {
+    initLiveness();
+
     faceDetector = FaceDetector(options: FaceDetectorOptions(minFaceSize: 0.3));
 
     _cameras = await availableCameras();
@@ -120,7 +135,59 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
   }
 
   Future<void> _takePicture() async {
-    if (_cameraController == null) return;
+    try {
+      if (_cameraController == null) return;
+      final result = await _cameraController!.takePicture();
+      final imageFile = File(result.path);
+      final resultLiveness = await liveness.detectLiveness(imageFile);
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Liveness Result'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Is Live: ${resultLiveness.isLive}'),
+                Text('Score: ${resultLiveness.score}'),
+                Text('Laplacian: ${resultLiveness.laplacian}'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Liveness Result'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [Text(e.toString())],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   @override
