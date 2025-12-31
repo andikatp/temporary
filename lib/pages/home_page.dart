@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
-import 'package:face_recognition/src/liveness_v3/presentation/views/custom_face_detector_screen.dart';
 import 'package:face_recognition/src/liveness_v3/presentation/views/liveness_detection_screen.dart';
+import 'package:face_recognition/src/liveness_v4/presentation/views/custom_face_detector_screen.dart';
 import 'package:face_recognition/widget/home_button.dart';
 import 'package:flutter/material.dart';
 

@@ -122,21 +122,21 @@ class FaceOverlayPainter extends CustomPainter {
     // Draw dark overlay with oval cutout
     final overlayPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.7)
-      ..style = PaintingStyle.fill;
+      ..style = .fill;
 
     final overlayPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addOval(
         Rect.fromCenter(center: center, width: ovalWidth, height: ovalHeight),
       )
-      ..fillType = PathFillType.evenOdd;
+      ..fillType = .evenOdd;
 
     canvas.drawPath(overlayPath, overlayPaint);
 
     // border
     final borderPaint = Paint()
       ..color = isWellPositioned ? detectedColor : undetectedColor
-      ..style = PaintingStyle.stroke
+      ..style = .stroke
       ..strokeWidth = 4.0;
 
     final borderPath = Path()
@@ -163,8 +163,8 @@ class FaceOverlayPainter extends CustomPainter {
     double radiusY,
   ) {
     final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
+      ..style = .stroke
+      ..strokeCap = .round
       ..strokeWidth = widthLine;
 
     final stepAngle = 2 * math.pi / maxStep;
@@ -197,7 +197,11 @@ class FaceOverlayPainter extends CustomPainter {
       final x2 = center.dx + innerRadiusX * math.cos(angle);
       final y2 = center.dy + innerRadiusY * math.sin(angle);
 
-      paint.color = isActive ? detectedColor : undetectedColor;
+      if (isWellPositioned) {
+        paint.color = isActive ? detectedColor : Colors.grey;
+      } else {
+        paint.color = undetectedColor;
+      }
 
       canvas.drawLine(Offset(x1, y1), Offset(x2, y2), paint);
     }
