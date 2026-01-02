@@ -1,40 +1,46 @@
-import 'package:sqflite/sqflite.dart';
+import 'dart:convert';
 
-class FaceDatabase {
-  static final FaceDatabase instance = FaceDatabase._internal();
+import 'package:shared_preferences/shared_preferences.dart';
 
-  static Database? _database;
+class LocalUserEmbeddingRepo {
+  static const _key = 'demo_user_embeddings';
 
-  FaceDatabase._internal();
-  static const tableName = "faces";
+  Future<void> saveUsers(List<UserEmbedded> users) async {
+    final prefs = await SharedPreferences.getInstance();
 
-  Future<Database> get database async {
-    if (_database != null) {
-      return _database!;
-    }
+    final encoded = users.map((u) => jsonEncode(u.toJson())).toList();
 
-    _database = await _initDatabase();
-    return _database!;
+    await prefs.setStringList(_key, encoded);
   }
 
-  Future<Database> _initDatabase() async {
-    final databasePath = await getDatabasesPath();
-    final path = '$databasePath/faces.db';
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDatabase,
-    );
-  }
+  Future<List<UserEmbedded>> loadUsers() async {
+    final prefs = await SharedPreferences.getInstance();
 
-  Future<void> _createDatabase(Database db, _) async {
-    return await db.execute('''
-        CREATE TABLE $tableName (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      faceData TEXT,
-      createdTime TEXT
+    final stored = prefs.getStringList(_key);
+    if (stored == null) return [];
+
+    return stored
+        .map(
+          (e) => UserEmbedded.fromJson(jsonDecode(e) as Map<String, dynamic>),
         )
-      ''');
+        .toList();
+  }
+}
+
+class UserEmbedded {
+  final String name;
+  final List<List<double>> embeddings;
+
+  const UserEmbedded({required this.name, required this.embeddings});
+
+  Map<String, dynamic> toJson() => {'name': name, 'embeddings': embeddings};
+
+  factory UserEmbedded.fromJson(Map<String, dynamic> json) {
+    return UserEmbedded(
+      name: json['name'] as String,
+      embeddings: (json['embeddings'] as List)
+          .map((e) => List<double>.from(e))
+          .toList(),
+    );
   }
 }

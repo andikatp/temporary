@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:face_auth_engine/face_auth_engine.dart';
 import 'package:face_recognition/src/liveness_v4/others/camera_function.dart';
 import 'package:face_recognition/src/liveness_v4/presentation/widgets/face_overlay.dart';
+import 'package:face_recognition/util/face_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
@@ -22,6 +23,7 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
   bool _isWellPositioned = false;
   List<CameraDescription> _cameras = [];
   late final LivenessDetector liveness;
+  late final FaceAuthEngine engine;
 
   bool _initialized = false;
 
@@ -43,7 +45,9 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
   }
 
   Future<void> _init() async {
-    initLiveness();
+    await initLiveness();
+
+    engine = FaceAuthEngine();
 
     faceDetector = FaceDetector(options: FaceDetectorOptions(minFaceSize: 0.3));
 
@@ -137,9 +141,27 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
   Future<void> _takePicture() async {
     try {
       if (_cameraController == null) return;
+
       final result = await _cameraController!.takePicture();
       final imageFile = File(result.path);
+
       final resultLiveness = await liveness.detectLiveness(imageFile);
+
+      final users = await LocalUserEmbeddingRepo().loadUsers();
+
+      UserEmbedded? matchedUser;
+
+      for (final user in users) {
+        final isMatch = await engine.matchFaceAgainstList(
+          imageFile.path,
+          user.embeddings,
+        );
+
+        if (isMatch) {
+          matchedUser = user;
+          break;
+        }
+      }
 
       if (!mounted) return;
 
@@ -155,6 +177,11 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
                 Text('Is Live: ${resultLiveness.isLive}'),
                 Text('Score: ${resultLiveness.score}'),
                 Text('Laplacian: ${resultLiveness.laplacian}'),
+                Text(
+                  matchedUser != null
+                      ? 'User exist: ${matchedUser.name}'
+                      : 'User not recognized',
+                ),
               ],
             ),
             actions: [
@@ -168,16 +195,13 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+
       showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Liveness Result'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [Text(e.toString())],
-            ),
+            title: const Text('Error'),
+            content: Text(e.toString()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),

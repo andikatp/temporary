@@ -215,9 +215,11 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionScreen> {
       if (file != null) {
         _capturedImages.add(file);
 
-        widget.config.onEveryImageOnEveryStep?.call(
-          List.unmodifiable(_capturedImages),
-        );
+        if (_capturedImages.length == _shuffledSteps.length) {
+          widget.config.onEveryImageOnEveryStep?.call(
+            List.unmodifiable(_capturedImages),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Capture error: $e');
@@ -299,9 +301,7 @@ class _LivenessDetectionScreenState extends State<LivenessDetectionScreen> {
 
     LivenessSteps.shuffleListLivenessChallenge(
       list: baseSteps,
-      isSmileLast: widget.config.useCustomizedLabel
-          ? false
-          : widget.config.shuffleListWithSmileLast,
+      isSmileLast: widget.config.shuffleListWithSmileLast,
     );
 
     _shuffledSteps = baseSteps;

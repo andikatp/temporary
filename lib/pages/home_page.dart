@@ -1,8 +1,11 @@
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:face_auth_engine/face_auth_engine.dart';
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
 import 'package:face_recognition/src/liveness_v3/presentation/views/liveness_detection_screen.dart';
 import 'package:face_recognition/src/liveness_v4/presentation/views/custom_face_detector_screen.dart';
+import 'package:face_recognition/util/face_database.dart';
 import 'package:face_recognition/widget/home_button.dart';
 import 'package:flutter/material.dart';
 
@@ -20,6 +23,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<File> imagePaths = [];
+
+  final engine = FaceAuthEngine(config: FaceConfig(recognitionThreshold: 1.0));
 
   @override
   Widget build(BuildContext context) {
@@ -219,8 +224,43 @@ class _HomePageState extends State<HomePage> {
                             lookUp: 'Lihat Atas',
                             smile: 'Senyum',
                           ),
-                          onEveryImageOnEveryStep: (images) =>
-                              setState(() => imagePaths = images),
+                          shuffleListWithSmileLast: true,
+                          onEveryImageOnEveryStep: (images) async {
+                            setState(() => imagePaths = images);
+                            try {
+                              final faces = await engine
+                                  .convertFromListToEmbedded(
+                                    images.map((e) => e.path).toList(),
+                                  );
+                              inspect(faces);
+                              await LocalUserEmbeddingRepo().saveUsers([
+                                UserEmbedded(name: 'Andika', embeddings: faces),
+                              ]);
+                              log("Face data added to Firestore for id: 123");
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Face data saved to Firebase!',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              log("Error adding face to Firestore: $e");
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Error saving to Firebase: $e',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
                         ),
                       ),
                     ),
