@@ -7,8 +7,13 @@ class ImageHelper {
   static Uint8List processCameraImage(Map<String, dynamic> args) {
     final CameraImage image = args['cameraImage'];
     final int quality = args['quality'];
-    final int rotation = args['rotation'];
+    int rotation = args['rotation'];
     final bool isFrontCamera = args['isFrontCamera'];
+
+    // Fix for iOS: If image is already portrait, reset rotation to 0 to avoid turning it landscape
+    if (image.height > image.width && rotation == 90) {
+      rotation = 0;
+    }
 
     img.Image converted;
 
@@ -72,12 +77,26 @@ class ImageHelper {
 
   // ================= iOS =================
   static img.Image _fromBGRA8888(CameraImage image) {
-    return img.Image.fromBytes(
-      width: image.width,
-      height: image.height,
-      bytes: image.planes[0].bytes.buffer,
-      order: img.ChannelOrder.bgra,
-    );
+    final int width = image.width;
+    final int height = image.height;
+    final Uint8List bytes = image.planes[0].bytes;
+    final int bytesPerRow = image.planes[0].bytesPerRow;
+
+    final imgImage = img.Image(width: width, height: height);
+
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        // BGRA format: Blue, Green, Red, Alpha
+        final int i = (y * bytesPerRow) + (x * 4);
+        final int b = bytes[i];
+        final int g = bytes[i + 1];
+        final int r = bytes[i + 2];
+        // Alpha is at i + 3, but we ignore it for RGB output
+        imgImage.setPixelRgb(x, y, r, g, b);
+      }
+    }
+
+    return imgImage;
   }
 
   // ================= Android (YUV420_888) =================

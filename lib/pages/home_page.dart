@@ -232,9 +232,8 @@ class _HomePageState extends State<HomePage> {
                                   .convertFromListToEmbedded(
                                     images.map((e) => e.path).toList(),
                                   );
-                              inspect(faces);
                               await LocalUserEmbeddingRepo().saveUsers([
-                                UserEmbedded(name: 'Andika', embeddings: faces),
+                                UserEmbedded(name: 'Andidi', embeddings: faces),
                               ]);
                               log("Face data added to Firestore for id: 123");
                               if (context.mounted) {

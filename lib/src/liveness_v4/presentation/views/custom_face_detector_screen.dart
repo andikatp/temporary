@@ -53,12 +53,14 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
 
     _cameras = await availableCameras();
 
+    final frontCamera = _cameras.firstWhere(
+      (camera) => camera.lensDirection == .front,
+    );
+
     final controller = CameraController(
-      _cameras.last,
-      ResolutionPreset.high,
-      imageFormatGroup: Platform.isAndroid
-          ? ImageFormatGroup.nv21
-          : ImageFormatGroup.bgra8888,
+      frontCamera,
+      .high,
+      imageFormatGroup: Platform.isAndroid ? .nv21 : .bgra8888,
       enableAudio: false,
     );
 
@@ -217,7 +219,7 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
   @override
   void dispose() {
     _stopImageStream();
-
+    faceDetector.close();
     _cameraController?.dispose();
     super.dispose();
   }

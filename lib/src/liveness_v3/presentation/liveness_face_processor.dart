@@ -21,7 +21,9 @@ class LivenessFaceProcessor {
       metadata: InputImageMetadata(
         size: Size(cameraImage.width.toDouble(), cameraImage.height.toDouble()),
         rotation: rotation,
-        format: InputImageFormat.nv21,
+        format: Platform.isIOS
+            ? InputImageFormat.bgra8888
+            : InputImageFormat.nv21,
         bytesPerRow: cameraImage.planes[0].bytesPerRow,
       ),
     );
