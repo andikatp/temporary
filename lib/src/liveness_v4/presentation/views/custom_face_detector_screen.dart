@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:face_auth_engine/face_auth_engine.dart';
+import 'package:face_recognition/services/face_model_service.dart';
 import 'package:face_recognition/src/liveness_v4/others/camera_function.dart';
 import 'package:face_recognition/src/liveness_v4/presentation/widgets/face_overlay.dart';
 import 'package:face_recognition/util/face_database.dart';
@@ -33,34 +34,26 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
     _init();
   }
 
-  Future<void> initLiveness() async {
-    liveness = await LivenessDetector.create(
-      options: LivenessOptions(
-        useGpu: true,
-        threshold: 0.8,
-        applyLaplacianGate: true,
-        laplacianThreshold: 500,
-      ),
-    );
-  }
-
   Future<void> _init() async {
-    await initLiveness();
+    // Ensure models are initialized
+    final service = FaceModelService.instance;
+    await service.initialize(); // Safe to call multiple times
 
-    engine = FaceAuthEngine();
-
-    faceDetector = FaceDetector(options: FaceDetectorOptions(minFaceSize: 0.3));
-
-    _cameras = await availableCameras();
+    liveness = service.liveness!;
+    engine = service.engine!;
+    faceDetector = service.faceDetector!;
+    _cameras = service.cameras;
 
     final frontCamera = _cameras.firstWhere(
-      (camera) => camera.lensDirection == .front,
+      (camera) => camera.lensDirection == CameraLensDirection.front,
     );
 
     final controller = CameraController(
       frontCamera,
-      .high,
-      imageFormatGroup: Platform.isAndroid ? .nv21 : .bgra8888,
+      ResolutionPreset.high,
+      imageFormatGroup: Platform.isAndroid
+          ? ImageFormatGroup.nv21
+          : ImageFormatGroup.bgra8888,
       enableAudio: false,
     );
 
@@ -143,6 +136,7 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
   Future<void> _takePicture() async {
     try {
       if (_cameraController == null) return;
+      if (_cameraController!.value.isTakingPicture) return;
 
       final result = await _cameraController!.takePicture();
       final imageFile = File(result.path);
@@ -219,7 +213,7 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
   @override
   void dispose() {
     _stopImageStream();
-    faceDetector.close();
+    // Do not close faceDetector as it is shared via FaceModelService
     _cameraController?.dispose();
     super.dispose();
   }
@@ -243,7 +237,10 @@ class _CustomFaceDetectorScreenState extends State<CustomFaceDetectorScreen> {
                       MediaQuery.sizeOf(context).aspectRatio),
               child: CameraPreview(
                 controller,
-                child: FaceOverlay(isWellPositioned: _isWellPositioned),
+                child: FaceOverlay(
+                  isWellPositioned: _isWellPositioned,
+                  showProgress: false,
+                ),
               ),
             ),
           ),

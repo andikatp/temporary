@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:face_auth_engine/face_auth_engine.dart';
+import 'package:face_recognition/services/face_model_service.dart';
 import 'package:face_recognition/src/liveness_v3/core/index.dart';
 import 'package:face_recognition/src/liveness_v3/presentation/views/liveness_detection_screen.dart';
 import 'package:face_recognition/src/liveness_v4/presentation/views/custom_face_detector_screen.dart';
@@ -25,6 +26,13 @@ class _HomePageState extends State<HomePage> {
   List<File> imagePaths = [];
 
   final engine = FaceAuthEngine(config: FaceConfig(recognitionThreshold: 1.0));
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the heavy models as soon as the app starts/home page loads
+    FaceModelService.instance.initialize();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -235,6 +243,7 @@ class _HomePageState extends State<HomePage> {
                               await LocalUserEmbeddingRepo().saveUsers([
                                 UserEmbedded(name: 'Andidi', embeddings: faces),
                               ]);
+                              inspect(faces);
                               log("Face data added to Firestore for id: 123");
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
